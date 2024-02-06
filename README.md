@@ -1,5 +1,8 @@
 go-johanson
 ===========
+[![Docs](https://godoc.org/github.com/tbknl/go-johanson?status.svg)](http://pkg.go.dev/github.com/tbknl/go-johanson)
+[![GitHub tag](https://img.shields.io/github/tag/tbknl/go-johanson)](https://github.com/tbknl/go-johanson/releases/?include_prereleases&sort=semver "View GitHub releases")
+[![License](https://img.shields.io/badge/License-BSD-blue)](./LICENSE)
 
 JSON stream writing Go module supporting a convenient workflow for data without corresponding (tagged) structs.
 
@@ -17,28 +20,35 @@ This module helps out in situations where JSON needs to be written to a stream, 
 
 ## Simple example
 ```go
-import "github.com/tbknl/go-johanson"
+package main
+
+import (
+	"os"
+
+	"github.com/tbknl/go-johanson"
+)
 
 func main() {
-    // NOTE: `writer` can be any object implementing the `io.Writer` interface,
-    //       for example `os.Stdout`, `&strings.Builder` and `http.ResponseWriter`.
-    writer := os.Stdout
-    jsw := johanson.NewStreamWriter(writer)
+	// NOTE: `writer` can be any object implementing the `io.Writer` interface,
+	//       for example `os.Stdout`, `&strings.Builder` and `http.ResponseWriter`.
+	writer := os.Stdout
+	jsw := johanson.NewStreamWriter(writer)
 
-    jsw.Array(func(a johanson.V) {
-        a.Uint(123)
-        a.String("Hello")
-        a.Object(func(o johanson.K) {
-            o.Item("str").String("value1")
-            o.Item("float").Float(45.67)
-            o.Item("null").Null()
-        })
-        a.Bool(true)
-        a.Int(-999)
-        a.Marshal(map[string]interface{}{ "one": 1, "two": []int{2} })
-    })
+	jsw.Array(func(a johanson.V) {
+		a.Uint(123)
+		a.String("Hello")
+		a.Object(func(o johanson.K) {
+			o.Item("str").String("value1")
+			o.Item("float").Float(45.67)
+			o.Item("null").Null()
+		})
+		a.Bool(true)
+		a.Int(-999)
+		a.Marshal(map[string]interface{}{"one": 1, "two": []int{2}})
+	})
 }
 ```
+[![Run in Go playground](https://img.shields.io/badge/Run%20in%20Go%20playground-20B2AA?style=for-the-badge)](https://goplay.tools/snippet/gQ4wMp0pQ6p)
 
 The above code will write the following to stdout: `[123,"Hello",{"str":"value1","float":45.67,"null":null},true,-999,{"one":1,"two":[2]}]`
 

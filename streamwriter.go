@@ -76,7 +76,7 @@ func (v *val) postwrite(single bool) {
 
 // Write `null` to the stream.
 // Only works if the value context is in a valid state.
-func (v *val) Null() {
+func (v V) Null() {
 	if ok, single := v.prewrite(); ok {
 		v.w.Write([]byte("null"))
 		v.postwrite(single)
@@ -87,7 +87,7 @@ func (v *val) Null() {
 // Returns an error if and only if marshaling fails, in which case
 // nothing is written to the stream.
 // Only works if the value context is in a valid state.
-func (v *val) Marshal(value interface{}) error {
+func (v V) Marshal(value interface{}) error {
 	if ok, single := v.prewrite(); ok {
 		bytes, err := json.Marshal(value)
 		if err == nil {
@@ -103,7 +103,7 @@ func (v *val) Marshal(value interface{}) error {
 
 // Write either `true` or `false` to the stream.
 // Only works if the value context is in a valid state.
-func (v *val) Bool(val bool) {
+func (v V) Bool(val bool) {
 	if ok, single := v.prewrite(); ok {
 		if val {
 			v.w.Write([]byte("true"))
@@ -116,7 +116,7 @@ func (v *val) Bool(val bool) {
 
 // Write the provided signed integer value to the stream.
 // Only works if the value context is in a valid state.
-func (v *val) Int(val int64) {
+func (v V) Int(val int64) {
 	if ok, single := v.prewrite(); ok {
 		v.w.Write([]byte(strconv.FormatInt(val, 10)))
 		v.postwrite(single)
@@ -125,7 +125,7 @@ func (v *val) Int(val int64) {
 
 // Write the provided unsigned integer value to the stream.
 // Only works if the value context is in a valid state.
-func (v *val) Uint(val uint64) {
+func (v V) Uint(val uint64) {
 	if ok, single := v.prewrite(); ok {
 		v.w.Write([]byte(strconv.FormatUint(val, 10)))
 		v.postwrite(single)
@@ -134,7 +134,7 @@ func (v *val) Uint(val uint64) {
 
 // Write the provided floating point value to the stream.
 // Only works if the value context is in a valid state.
-func (v *val) Float(value float64) {
+func (v V) Float(value float64) {
 	if ok, single := v.prewrite(); ok {
 		bytes, _ := json.Marshal(value)
 		v.w.Write(bytes)
@@ -145,7 +145,7 @@ func (v *val) Float(value float64) {
 // Write the provided string value to the stream, escaping special JSON
 // characters.
 // Only works if the value context is in a valid state.
-func (v *val) String(s string) {
+func (v V) String(s string) {
 	if ok, single := v.prewrite(); ok {
 		bytes, _ := json.Marshal(s)
 		v.w.Write(bytes)
@@ -156,7 +156,7 @@ func (v *val) String(s string) {
 // Opens an array context and calls the callback with a value context, from
 // which values can be written to the array.
 // The array is closed when the callback returns.
-func (v *val) Array(fn func(V)) {
+func (v V) Array(fn func(V)) {
 	if ok, single := v.prewrite(); ok {
 		v.ctx.pause(true)
 		v.w.Write([]byte{'['})
@@ -218,7 +218,7 @@ func (ctx *jsonContextObjectItem) prewrite(w io.Writer) bool {
 // Returns a JSON single value context, to which the value of the item can be
 // written.
 // Only works if the object context is in a valid state.
-func (o *obj) Item(key string) V {
+func (o K) Item(key string) V {
 	if !o.paused {
 		o.paused = true
 		return &val{w: o.w, ctx: &jsonContextObjectItem{key: key, obj: o}}
@@ -228,7 +228,7 @@ func (o *obj) Item(key string) V {
 
 // Marshal any object/map and write its contents to the JSON object context.
 // Only works if the object context is in a valid state.
-func (o *obj) Marshal(anyMap map[string]interface{}) error {
+func (o K) Marshal(anyMap map[string]interface{}) error {
 	bytes, err := json.Marshal(anyMap)
 	if err != nil {
 		return err
@@ -242,7 +242,7 @@ func (o *obj) Marshal(anyMap map[string]interface{}) error {
 // Opens an object context and calls the callback with the object context, from
 // which items can be written to the object.
 // The object is closed when the callback returns.
-func (v *val) Object(fn func(K)) {
+func (v V) Object(fn func(K)) {
 	if ok, single := v.prewrite(); ok {
 		v.ctx.pause(true)
 		v.w.Write([]byte{'{'})
@@ -272,13 +272,13 @@ func (ww *writerWrapper) Write(p []byte) (n int, err error) {
 }
 
 // Check whether the JSON value context is finished.
-func (v *val) Finished() bool {
+func (v V) Finished() bool {
 	return v.ctx == nil
 }
 
 // Return the last error that occurred while writing to the stream, or `nil`
 // in case no error has occurred.
-func (v *val) Error() error {
+func (v V) Error() error {
 	ww, ok := v.w.(*writerWrapper)
 	if ok {
 		return ww.Err
@@ -289,7 +289,7 @@ func (v *val) Error() error {
 
 // NewStreamWriter instantiates a new JSON stream writer, using w as the
 // underlying writer.
-// It returns a JSON single value context to one value can be written.
+// Returns a JSON single value context for writing one value of any JSON type.
 func NewStreamWriter(w io.Writer) V {
 	ww := &writerWrapper{w: w}
 	v := &val{w: ww}
